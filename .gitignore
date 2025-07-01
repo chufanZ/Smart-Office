@@ -1,0 +1,5 @@
+# ignore sensor data
+/backend/sensor_data.csv
+
+# ignore plan
+/backend/sas_plan

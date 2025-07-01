@@ -1,0 +1,23 @@
+(define (problem control-meeting)
+  (:domain smart-office)
+  (:objects plugwise1 plugwise2 - device meeting1 - room)
+  (:init
+    (room meeting1)
+    (light plugwise1)
+    (conditioner plugwise2)
+    (installed-in-light plugwise1 meeting1)
+    (installed-in-conditioner plugwise2 meeting1)
+    (light-off plugwise1)
+    (conditioner-off plugwise2)
+    (motion-in meeting1)
+    (dark meeting1)
+    (hot meeting1)
+  )
+  (:goal
+    (and
+      (notified meeting1)
+      (light-on plugwise1)
+      (conditioner-on plugwise2)
+     )
+  )
+)
