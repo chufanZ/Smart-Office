@@ -85,7 +85,7 @@ mongoose.connect(uri)
             }
 
             const query = {};
-            query[field] = field === 'timestamp' ? value : Number(value); // 字符串留字符串，其余转数字
+            query[field] = field === 'timestamp' ? value : Number(value);
 
             try {
                 const sensordata = await SensorData.find(query);
@@ -96,9 +96,9 @@ mongoose.connect(uri)
         });
 
         app.listen(port, () => {
-            console.log(`🚀 Server is running at http://localhost:${port}`);
+            console.log(`Server is running at http://localhost:${port}`);
         });
     })
     .catch(err => {
-        console.error("❌ Connection failed:", err);
+        console.error("Connection failed:", err);
     });
