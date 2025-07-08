@@ -137,7 +137,8 @@ def execute_plan(plan_file = "sas_plan"):
             elif "turn-off-conditioner" in action:
                 #os.system("python3 controller_mqtt.py turn_off_plug2")
                 actions.append("turn_off_plug2")
-            elif "sned-notification" in action:
+            elif "send-notification" in action:
+                actions.append("send-notification")
                 print("[COMMAND] send-notification meeting1")
             elif "turn-on-dehumidifier" in action:
                 actions.append("turn_on_plug3")
@@ -215,7 +216,7 @@ def main():
     print("Executing plan ...")
     execute_plan()
     print("Save ...")
-    save_plan_mongodb(actions, timestamp)
+    #save_plan_mongodb(actions, timestamp)
     print("Done.")
 
 if __name__ == "__main__":
