@@ -7,26 +7,72 @@ import SmartRoomIllustration from "../components/SmartRoomIllustration";
 const socket = io("http://localhost:3000");
 
 export default function SmartRoomStatus() {
-  const [sensorData, setSensorData] = useState<any>(null);
+  const [sensorData, setSensorData] = useState<any>(null);  
+  const [sensorHistory, setSensorHistory] = useState<any[]>([]);   // history
+ 
   //gauge  
   const [temp, setTemp] = useState(0);
   const [humi, setHumi] = useState(0);
 
-  useEffect(() => {
-    socket.on("sensor-data", (data) => {
-        console.log("Received sensor data:", data.node);
-        setSensorData(data);
-        // Update gauges
-        setTemp(parseFloat(data.temperature));
-        setHumi(parseFloat(data.humidity));
+  // useEffect(() => {
+  //   socket.on("sensor-data", (data) => {
+  //       console.log("Received sensor data:", data.node);
+  //       setSensorData(data);
+  //       // Update gauges
+  //       setTemp(parseFloat(data.temperature));
+  //       setHumi(parseFloat(data.humidity));
       
-      console.log("Sensor data1:", data);
-    });
+  //     console.log("Sensor data1:", data);
+  //   });
 
-    return () => {
-      socket.off("sensor-data");
+  //   return () => {
+  //     socket.off("sensor-data");
+  //   };
+  // }, []);
+
+// api
+//   useEffect(() => {
+//   const fetchData = async () => {
+//     const res = await fetch("http://localhost:3000/api/sensordata");
+//     const json = await res.json();
+//     console.log("Sensor data:", json);
+//     if (json.length > 0) {
+//       const latest = json[json.length - 1];
+//       setSensorData(latest);
+//       setTemp(parseFloat(parseFloat(latest.temperature).toFixed(1)));
+//       setHumi(parseFloat(latest.humidity));
+//     }
+//   };
+
+//   fetchData();
+//   const interval = setInterval(fetchData, 3000);
+//   return () => clearInterval(interval);
+// }, []);
+
+
+ useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/sensordata");
+        const json = await res.json();
+        if (!Array.isArray(json) || json.length === 0) return;
+
+        setSensorHistory(json);
+
+        const latest = json[json.length - 1];
+        setSensorData(latest);
+        setTemp(parseFloat(parseFloat(latest.temperature).toFixed(1)));
+        setHumi(parseFloat(parseFloat(latest.humidity).toFixed(1)));
+      } catch (err) {
+        console.error("Failed to fetch sensor data:", err);
+      }
     };
+
+    fetchData();
+    const interval = setInterval(fetchData, 3000); // 每 3 秒更新一次
+    return () => clearInterval(interval);
   }, []);
+
 
   return (
     //  style={{ width: "1000px" }}
@@ -45,8 +91,9 @@ export default function SmartRoomStatus() {
       
         {/* 2 */}
         <div className="flex flex-row gap-4 ">
-        <SensorLineChart />
-        {/* <HistoricalSensorChart /> */}
+       <SensorLineChart data={sensorHistory} />
+
+        {/* <SensorLineChart /> */}
         </div>
       </div>
 
@@ -79,15 +126,19 @@ export default function SmartRoomStatus() {
               <div className="flex items-center gap-1">
                 <span className="text-x2">🌡️</span>
                 <span className="font-medium">Temperature:</span>
-                <span>{sensorData.temperature}°C</span>
+                <span>{sensorData.temperature.toFixed(1)}°C</span>
               </div>
 
                {/* Light */}
               <div className="flex items-center gap-2">
                 <span className="text-xl">💡</span>
                 <span className="font-medium">Light:</span>
-                <span className={sensorData.light === "on" ? "text-yellow-500" : "text-gray-400"}>
-                  {sensorData.light}
+                <span className={
+                  sensorData.motion > 0 && sensorData.luminance <= 100
+                    ? "text-yellow-500"
+                    : "text-gray-400"
+                }>
+                  {sensorData.motion > 0 && sensorData.luminance <= 100 ? "on" : "off"}
                 </span>
               </div>
 
