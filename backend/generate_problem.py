@@ -44,10 +44,7 @@ def read_sensor_data(csv_path = CSV_PATH):
         rows = list(reader)
         if not rows:
             return None
-        lastest = rows[-1]
-        print("Lastest row is:", lastest)
-        print("Available keys:", lastest.keys())
-        print("Raw temperature:", lastest.get("temperature"))   
+        lastest = rows[-1]  
         return {
             "temperature": float(lastest["temperature"]),
             "motion": int(lastest["motion"]),
