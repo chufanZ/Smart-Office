@@ -4,12 +4,21 @@ import csv
 import paho.mqtt.client as mqtt
 import json
 from plan_mongodb import save_plan_mongodb
+import subprocess
 
 CSV_PATH = "sensor_data.csv"
-DOMAIN_FILE = "domain.pddl"
+DOMAIN_FILE = "/Users/chufanzhang/Uni\ Stuttgart/SoSe2025/Smart\ City\ and\ Internet\ of\ Things/project/Smart-Office/backend/domain.pddl"
 PROBLEM_FILE = "problem.pddl"
 LAST_STATE_FILE = "last_state.json"
-PLANNER_CMD = "/home/pi/downward/fast-downward.py /home/pi/Desktop/collection_sensordata/domain.pddl /home/pi/Desktop/collection_sensordata/problem.pddl --search \"astar(blind())\""
+
+PLANNER_CMD = [
+    "/Users/chufanzhang/downward/fast-downward.py",
+    "/Users/chufanzhang/Uni Stuttgart/SoSe2025/Smart City and Internet of Things/project/Smart-Office/backend/domain.pddl",
+    "/Users/chufanzhang/Uni Stuttgart/SoSe2025/Smart City and Internet of Things/project/Smart-Office/backend/problem.pddl",
+    "--search",
+    "astar(blind())"
+]
+
 
 def load_last_state():
     default = {"light": "off", "conditioner": "off", "dehumidifier": "off"}
@@ -36,6 +45,9 @@ def read_sensor_data(csv_path = CSV_PATH):
         if not rows:
             return None
         lastest = rows[-1]
+        print("Lastest row is:", lastest)
+        print("Available keys:", lastest.keys())
+        print("Raw temperature:", lastest.get("temperature"))   
         return {
             "temperature": float(lastest["temperature"]),
             "motion": int(lastest["motion"]),
@@ -45,7 +57,7 @@ def read_sensor_data(csv_path = CSV_PATH):
         }
 
 
-def generate_problem_file(data, output_path = PROBLEM_FILE):
+def generate_problem_file(data, output_path = PROBLEM_FILE, last_state=None):
     motion = data["motion"]
     temp = data["temperature"]
     light = data["luminance"]
@@ -59,11 +71,24 @@ def generate_problem_file(data, output_path = PROBLEM_FILE):
         "(dehumidifier plugwise3)",
         "(installed-in-light plugwise1 meeting1)",
         "(installed-in-conditioner plugwise2 meeting1)",
-        "(installed-in-dehumidifier plugwise3 meeting1)",
-        "(light-off plugwise1)",
-        "(conditioner-off plugwise2)",
-        "(dehumidifier-off plugwise3)"
+        "(installed-in-dehumidifier plugwise3 meeting1)"
+
     ]
+    if last_state["light"] == "on":
+        init_conditions.append("(light-on plugwise1)")
+    else:
+        init_conditions.append("(light-off plugwise1)")
+    
+    if last_state["conditioner"] == "on":
+        init_conditions.append("(conditioner-on plugwise2)")
+    else:
+        init_conditions.append("(conditioner-off plugwise2)")
+    
+    if last_state["dehumidifier"] == "on":
+        init_conditions.append("(dehumidifier-on plugwise3)")
+    else:
+        init_conditions.append("(dehumidifier-off plugwise3)")
+        
     if motion:
         init_conditions.append("(motion-in meeting1)")
         goal_conditions.append("(notified meeting1)")
@@ -74,6 +99,8 @@ def generate_problem_file(data, output_path = PROBLEM_FILE):
         if temp >= 26:
             init_conditions.append("(hot meeting1)")
             goal_conditions.append("(conditioner-on plugwise2)")
+        else:
+            goal_conditions.append("(conditioner-off plugwise2)")
     else:
         goal_conditions.append("(light-off plugwise1)")
         goal_conditions.append("(conditioner-off plugwise2)")
@@ -104,10 +131,13 @@ def generate_problem_file(data, output_path = PROBLEM_FILE):
         f.write(")\n")
         
 def send_mqtt_actions(actions):
-    client = mqtt.Client()
-    client.connect("localhost", 1883, 60)
+    client = mqtt.Client(protocol=mqtt.MQTTv311)
+    client.connect("192.168.178.37", 1883, 60)
+    client.loop_start()
     payload = json.dumps({"actions": actions})
     client.publish("htn/commands", payload)
+    time.sleep(1)
+    client.loop_stop()
     client.disconnect()
     print("[INFO] Notify action found.")
                             
@@ -150,6 +180,22 @@ def execute_plan(plan_file = "sas_plan"):
     timestamp = data["timestamp"]
     save_plan_mongodb(actions, timestamp)
     
+    state = load_last_state()
+    for action in actions:
+        if action == "turn_on_plug1":
+            state["light"] = "on"
+        elif action == "turn_off_plug1":
+            state["light"] = "off"
+        elif action == "turn_on_plug2":
+            state["conditioner"] = "on"
+        elif action == "turn_off_plug2":
+            state["conditioner"] = "off"
+        elif action == "turn_on_plug3":
+            state["dehumidifier"] = "on"
+        elif action == "turn_off_plug3":
+            state["dehumidifier"] = "off"
+    
+    save_last_state(state)
     
     return actions
     
@@ -210,9 +256,9 @@ def main():
     print("[DONE]")
     
     print("Generating problem file ...")
-    generate_problem_file(data)
+    generate_problem_file(data, last_state=last_state)
     print("Executing planner ...")
-    os.system(PLANNER_CMD)
+    subprocess.run(PLANNER_CMD)
     print("Executing plan ...")
     execute_plan()
     print("Save ...")

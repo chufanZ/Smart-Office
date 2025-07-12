@@ -6,7 +6,7 @@ client = MongoClient(uri)
 db = client['smartOffice']
 collection = db['sensorData']
 
-csv_path = "/home/pi/Desktop/collection_sensordata/sensor_data.csv"
+csv_path = "sensor_data.csv"
 
 try:
 	with open(csv_path, "r") as file:
