@@ -3,3 +3,9 @@
 
 # ignore plan
 /backend/sas_plan
+
+/backend/sensor_data.json
+
+/backend/problem.pddl
+
+/backend/last_state.json
