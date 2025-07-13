@@ -21,6 +21,7 @@ try:
 				"timestamp": last_row["timestamp"],
 				"node": int(last_row["node"]),
 				"temperature": float(last_row["temperature"]),
+				"motion": int(last_row["motion"]),
 				"humidity": int(last_row["humidity"]),
 				"luminance": int(last_row["luminance"]),
 				"ultraviolet": int(last_row["ultraviolet"]),
