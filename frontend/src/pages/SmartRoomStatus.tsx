@@ -21,11 +21,12 @@ export default function SmartRoomStatus() {
   const [temp, setTemp] = useState(0);
   const [humi, setHumi] = useState(0);
 
-  // 🔧 每 3 秒轮询 email 发信状态
+
+  // 
   useEffect(() => {
     const fetchEmailStatus = async () => {
       try {
-        const res = await fetch("/api/notification-status");
+        const res = await fetch("http://localhost:4444/api/notification-status");
         const json = await res.json();
         console.log("Email status:!!!", json);
         setEmailSent(json.notified); // true / false
@@ -61,18 +62,53 @@ export default function SmartRoomStatus() {
       try {
         const res = await fetch("http://localhost:3000/api/plans");
         const plans = await res.json();
-        const latestPlan = plans[plans.length - 1] || {};
-        const actions: string[] = latestPlan.actions || [];
-        const time: string = latestPlan.timestamp || "";
 
-        setPlanTimestamp(time);
+        // Default states
+        let plug1: boolean | null = null;
+        let plug2: boolean | null = null;
+        let plug3: boolean | null = null;
+        let notification = false;
+
+        // Scan plans from newest to oldest
+        for (let i = plans.length - 1; i >= 0; i--) {
+          const actions = plans[i].actions || [];
+
+          if (plug1 === null) {
+            if (actions.includes("turn_on_plug1")) plug1 = true;
+            if (actions.includes("turn_off_plug1")) plug1 = false;
+          }
+
+          if (plug2 === null) {
+            if (actions.includes("turn_on_plug2")) plug2 = true;
+            if (actions.includes("turn_off_plug2")) plug2 = false;
+          }
+
+          if (plug3 === null) {
+            if (actions.includes("turn_on_plug3")) plug3 = true;
+            if (actions.includes("turn_off_plug3")) plug3 = false;
+          }
+
+          if (!notification && actions.includes("send-notification")) {
+            notification = true;
+          }
+
+          // All plug states determined, we can break early
+          if (plug1 !== null && plug2 !== null && plug3 !== null && notification) break;
+        }
+
+        // Fallback to false if not found
         setPlugStates({
-          plug1: actions.includes("turn_on_plug1"),
-          plug2: actions.includes("turn_on_plug2"),
-          plug3: actions.includes("turn_on_plug3"),
-          notification: actions.includes("send-notification"),
+          plug1: plug1 ?? false,
+          plug2: plug2 ?? false,
+          plug3: plug3 ?? false,
+          notification,
         });
-        console.log("Latest plan actions:noticifation", actions.includes("send-notification"));
+
+        // Still show the latest timestamp for UI display
+        const latestPlan = plans[plans.length - 1] || {};
+        const time: string = latestPlan.timestamp || "";
+        setPlanTimestamp(time);
+
         const matchedSensor = sensorHistory.find(
           (s) => s.timestamp.slice(0, 19) === time.slice(0, 19)
         );
@@ -84,6 +120,7 @@ export default function SmartRoomStatus() {
         } else {
           setSensorData(null);
         }
+
       } catch (e) {
         console.error("Failed to fetch plans:", e);
       }
@@ -96,7 +133,7 @@ export default function SmartRoomStatus() {
 
   useEffect(() => {
   if (plugStates.notification && emailSent) {
-    fetch("/api/notification-shown", { method: "POST" }).catch(console.error);
+    fetch("http://localhost:4444/api/notification-shown", { method: "POST" }).catch(console.error);
   }
 }, [plugStates.notification, emailSent]);
 
@@ -123,8 +160,8 @@ export default function SmartRoomStatus() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">🧍</span>
                 <span className="font-medium">Presence:</span>
-                <span className={sensorData.motion ? "text-green-600" : "text-gray-400"}>
-                  {sensorData.motion ? "Yes" : "No"}
+                <span className={sensorData.motion|| plugStates.plug1 == true||plugStates.plug2 == true ? "text-green-600" : "text-gray-400"}>
+                  {sensorData.motion||plugStates.plug1 == true ||plugStates.plug2 == true ? "Yes" : "No"}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -151,16 +188,10 @@ export default function SmartRoomStatus() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xl">☀️</span>
-                <span className="font-medium">UV Index:</span>
+                <span className="font-medium">Ultraviolet</span>
                 <span>{sensorData.ultraviolet}</span>
               </div>
-              {/* <div className="flex items-center gap-2 col-span-full">
-                <span className="text-xl">❄️</span>
-                <span className="font-medium">AC Temperature:</span>
-                <span className={plugStates.plug2 ? "text-blue-500" : "text-gray-400"}>
-                  {plugStates.plug2 ? `${sensorData.ac}°C` : "Off"}
-                </span>
-              </div> */}
+         
             </div>
           ) : (
             <p className="text-gray-500">Waiting for data...</p>
@@ -172,7 +203,8 @@ export default function SmartRoomStatus() {
             plug1={plugStates.plug1}
             plug2={plugStates.plug2}
             plug3={plugStates.plug3}
-            hasNotification={plugStates.notification && emailSent}
+            hasNotification={
+               plugStates.notification && emailSent}
           />
         </div>
       </div>
