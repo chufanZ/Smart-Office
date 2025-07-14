@@ -7,16 +7,22 @@
   (:predicates
     (room ?r)
     (light ?l)
+    (dehumidifier ?d)
     (conditioner ?c)
+    (humidity ?r)
 
     (installed-in-light ?l ?r)
     (installed-in-conditioner ?c ?r)
+    (installed-in-dehumidifier ?d ?r)
 
     (light-on ?l)
     (light-off ?l)
 
     (conditioner-on ?c)
     (conditioner-off ?c)
+    
+    (dehumidifier-on ?d)
+    (dehumidifier-off ?d)
 
     (motion-in ?r)
     (hot ?r)
@@ -66,6 +72,26 @@
     )
     :effect (and (conditioner-off ?c) (not (conditioner-on ?c)))
   )
+  
+  (:action turn-on-dehumidifier
+    :parameters (?d ?r)
+    :precondition (and
+      (dehumidifier-off ?d)
+      (installed-in-dehumidifier ?d ?r)
+      (humidity ?r)
+    )
+    :effect (and (dehumidifier-on ?d) (not (dehumidifier-off ?d)))
+  )
+  
+  (:action turn-off-dehumidifier
+    :parameters (?d ?r)
+    :precondition (and
+      (dehumidifier-on ?d)
+      (installed-in-dehumidifier ?d ?r)
+      (not (humidity ?r))
+    )
+    :effect (and (dehumidifier-off ?d) (not (dehumidifier-on ?d)))
+  )
 
   (:action send-notification
     :parameters (?r)
@@ -75,4 +101,5 @@
     )
     :effect (notified ?r)
   )
+  
 )

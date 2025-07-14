@@ -6,7 +6,7 @@ client = MongoClient(uri)
 db = client['smartOffice']
 collection = db['sensorData']
 
-csv_path = "/home/pi/Desktop/collection_sensordata/sensor_data.csv"
+csv_path = "sensor_data.csv"
 
 try:
 	with open(csv_path, "r") as file:
@@ -21,6 +21,7 @@ try:
 				"timestamp": last_row["timestamp"],
 				"node": int(last_row["node"]),
 				"temperature": float(last_row["temperature"]),
+				"motion": int(last_row["motion"]),
 				"humidity": int(last_row["humidity"]),
 				"luminance": int(last_row["luminance"]),
 				"ultraviolet": int(last_row["ultraviolet"]),
