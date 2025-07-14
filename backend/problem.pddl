@@ -12,15 +12,11 @@
     (light-on plugwise1)
     (conditioner-on plugwise2)
     (dehumidifier-off plugwise3)
-    (motion-in meeting1)
-    (dark meeting1)
-    (hot meeting1)
   )
   (:goal
     (and
-      (notified meeting1)
-      (light-on plugwise1)
-      (conditioner-on plugwise2)
+      (light-off plugwise1)
+      (conditioner-off plugwise2)
       (dehumidifier-off plugwise3)
      )
   )

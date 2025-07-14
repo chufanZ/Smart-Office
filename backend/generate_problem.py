@@ -129,7 +129,7 @@ def generate_problem_file(data, output_path = PROBLEM_FILE, last_state=None):
         
 def send_mqtt_actions(actions):
     client = mqtt.Client(protocol=mqtt.MQTTv311)
-    client.connect("192.168.178.37", 1883, 60)
+    client.connect("172.20.10.12", 1883, 60)
     client.loop_start()
     payload = json.dumps({"actions": actions})
     client.publish("htn/commands", payload)
