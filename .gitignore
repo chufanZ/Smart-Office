@@ -1,11 +1,13 @@
 # ignore sensor data
-/backend/sensor_data.csv
+#/backend/sensor_data.csv
 
 # ignore plan
-/backend/sas_plan
+#/backend/sas_plan
 
-/backend/sensor_data.json
+#/backend/sensor_data.json
 
-/backend/problem.pddl
+#/backend/problem.pddl
 
-/backend/last_state.json
+#/backend/last_state.json
+
+.DS_Store
