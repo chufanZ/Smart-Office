@@ -1,5 +1,2 @@
 (send-notification meeting1)
-(turn-on-light plugwise1 meeting1)
-(turn-on-dehumidifier plugwise3 meeting1)
-(turn-on-conditioner plugwise2 meeting1)
-; cost = 4 (unit cost)
+; cost = 1 (unit cost)

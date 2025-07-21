@@ -93,6 +93,8 @@ def generate_problem_file(data, output_path = PROBLEM_FILE, last_state=None):
         if light <= 100:
             init_conditions.append("(dark meeting1)")
             goal_conditions.append("(light-on plugwise1)")
+        else:
+            goal_conditions.append("(light-off plugwise1)")
         if temp >= 26:
             init_conditions.append("(hot meeting1)")
             goal_conditions.append("(conditioner-on plugwise2)")
@@ -102,7 +104,7 @@ def generate_problem_file(data, output_path = PROBLEM_FILE, last_state=None):
         goal_conditions.append("(light-off plugwise1)")
         goal_conditions.append("(conditioner-off plugwise2)")
     
-    if humidity >= 75:
+    if humidity >= 50:
         init_conditions.append("(humidity meeting1)")
         goal_conditions.append("(dehumidifier-on plugwise3)")
     else:
@@ -221,6 +223,9 @@ def main():
         if light <= 100 and last_state["light"] == "off":
             actions.append("turn_on_plug1")
             desired_state["light"] = "on"
+        elif light > 100 and last_state["light"] == "on":
+            actions.append("turn_off_plug1")
+            desired_state["light"] = "off"
         if temp >= 26 and last_state["conditioner"] == "off":
             actions.append("turn_on_plug2")
             desired_state["conditioner"] = "on"
@@ -236,10 +241,10 @@ def main():
             actions.append("turn_off_plug2")
             desired_state["conditioner"] = "off"
             
-    if humidity >= 75 and last_state["dehumidifier"] == "off":
+    if humidity >= 50 and last_state["dehumidifier"] == "off":
         actions.append("turn_on_plug3")
         desired_state["dehumidifier"] = "on"
-    elif humidity < 75 and last_state["dehumidifier"] == "on":
+    elif humidity < 50 and last_state["dehumidifier"] == "on":
         actions.append("turn_off_plug3")
         desired_state["dehumidifier"] = "off"
 
